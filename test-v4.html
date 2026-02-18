@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Тест v4</title>
+</head>
+<body>
+    <h2>Тест виджета v4</h2>
+    <div data-fit1c-schedule></div>
+    
+    <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
+            data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
+            data-type="schedule" 
+            data-theme='light' 
+            data-settings='{
+                "url_data": {
+                    "page": "schedule",
+                    "type": "rent",
+                    "club_id": "f1c7788a-557e-11f0-910a-00505683cb0f",
+                    "show_type": "day",
+                    "rent_default_view": "services"
+                },
+                "router": {
+                    "off": true
+                },
+                "schedule": {
+                    "blocks_show": {
+                        "navigation": true
+                    },
+                    "filter": {
+                        "services_avail": [
+                            "c405e0d0-d0fd-11f0-997d-00505683cb0f",
+                            "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
+                        ]
+                    }
+                }
+            }'></script>
+</body>
+</html>
