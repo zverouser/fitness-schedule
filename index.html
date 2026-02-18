@@ -20,5 +20,46 @@
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
     </script>
+    <script>
+  function resizeTelegramApp() {
+    if (window.Telegram && window.Telegram.WebApp) {
+      // Пытаемся найти iframe внутри виджета
+      const iframe = document.querySelector('[data-fit1c-schedule] iframe, [data-fit1c-calendar] iframe');
+      
+      if (iframe) {
+        // Если iframe загружен, пробуем получить его высоту и передать Telegram
+        try {
+          // Простой способ: попросить Telegram подстроиться под контент
+          window.Telegram.WebApp.expand();
+          
+          // Более точный способ: если у iframe есть контент, можно попробовать измерить
+          setTimeout(() => {
+            window.Telegram.WebApp.expand();
+          }, 500);
+        } catch (e) {
+          console.log('Ошибка ресайза:', e);
+        }
+      } else {
+        // Если iframe еще не появился, просто расширяем на всякий случай
+        window.Telegram.WebApp.expand();
+      }
+    }
+  }
+
+  // Запускаем проверку несколько раз после загрузки страницы
+  window.addEventListener('load', function() {
+    setTimeout(resizeTelegramApp, 300);  // Через 0.3 сек
+    setTimeout(resizeTelegramApp, 1000); // Через 1 сек
+    setTimeout(resizeTelegramApp, 3000); // Через 3 сек
+  });
+
+  // Наблюдаем за изменениями в DOM, чтобы поймать момент появления iframe
+  const observer = new MutationObserver(function(mutations) {
+    resizeTelegramApp();
+  });
+  
+  // Начинаем наблюдение за изменениями в теле документа
+  observer.observe(document.body, { childList: true, subtree: true });
+</script>
 </body>
 </html>
