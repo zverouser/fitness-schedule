@@ -2,52 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- Подключаем Telegram SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <style>
-        /* МИНИМАЛЬНЫЕ СТИЛИ - только самое необходимое */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            background-color: #ffffff; /* Временный фон */
-        }
-        
-        /* Убираем все трансформации, которые могут вызвать размытие */
-        [data-fit1c-schedule] {
-            width: 100%;
-            height: 100%;
-            min-height: 100vh;
-            opacity: 1;
-            transform: none;
-            backface-visibility: visible;
-            -webkit-font-smoothing: antialiased;
-        }
-        
-        /* Если виджет создает iframe */
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-            opacity: 1;
-            transform: none;
-        }
-    </style>
+    <title>Тест v4</title>
 </head>
 <body>
-    <!-- Контейнер для виджета -->
+    <h2>Тест виджета v4</h2>
     <div data-fit1c-schedule></div>
-
-    <!-- Подключаем виджет -->
+    
     <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
             data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
             data-type="schedule" 
@@ -75,74 +35,5 @@
                     }
                 }
             }'></script>
-
-    <script>
-        (function() {
-            const WebApp = window.Telegram.WebApp;
-            
-            // 1. Базовая инициализация
-            WebApp.ready();
-            WebApp.expand();
-            
-            // 2. Отключаем все возможные трансформации от Telegram
-            document.body.style.transform = 'none';
-            document.body.style.webkitTransform = 'none';
-            
-            // 3. Функция принудительной перерисовки
-            function forceRedraw() {
-                // Сообщаем Telegram изменить размер
-                WebApp.expand();
-                
-                // Принудительно перерисовываем виджет
-                const widget = document.querySelector('[data-fit1c-schedule]');
-                if (widget) {
-                    // Скрываем и показываем для перерисовки
-                    widget.style.opacity = '0.99';
-                    setTimeout(() => {
-                        widget.style.opacity = '1';
-                    }, 10);
-                    
-                    // Ищем iframe внутри виджета
-                    const iframe = widget.querySelector('iframe');
-                    if (iframe) {
-                        // Если есть iframe, пробуем сбросить его размеры
-                        iframe.style.height = '100%';
-                        iframe.style.width = '100%';
-                    }
-                }
-            }
-            
-            // 4. Запускаем перерисовку несколько раз
-            forceRedraw();
-            setTimeout(forceRedraw, 300);
-            setTimeout(forceRedraw, 800);
-            setTimeout(forceRedraw, 1500);
-            setTimeout(forceRedraw, 3000);
-            
-            // 5. Следим за изменениями
-            const observer = new MutationObserver(function() {
-                forceRedraw();
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['style', 'class']
-            });
-            
-            // 6. Обработка тем
-            WebApp.onEvent('themeChanged', function() {
-                setTimeout(forceRedraw, 100);
-            });
-            
-            // 7. Кнопка назад
-            WebApp.onEvent('backButtonClicked', function() {
-                WebApp.close();
-            });
-            
-            console.log('Мини-приложение запущено с принудительной перерисовкой');
-        })();
-    </script>
 </body>
 </html>
