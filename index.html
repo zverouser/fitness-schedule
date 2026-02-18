@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Подключаем Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -11,184 +11,68 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
-        #status {
-            text-align: center;
-            padding: 40px 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .loading {
-            color: var(--tg-theme-hint-color, #999999);
-        }
-        
-        .error {
-            color: var(--tg-theme-destructive-text-color, #ff3b30);
-        }
-        
-        .retry-btn {
-            background-color: var(--tg-theme-button-color, #40a7e3);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-top: 20px;
-            cursor: pointer;
-        }
-        
-        /* Стили для контейнера виджета */
-        #widget-container {
+        /* Просто показываем виджет на весь экран */
+        [data-fit1c-schedule] {
             width: 100%;
             min-height: 100vh;
-        }
-        
-        /* Адаптация виджета под Telegram */
-        [data-fit1c-schedule] {
-            --primary-color: var(--tg-theme-button-color, #40a7e3);
-            --text-color: var(--tg-theme-text-color, #000000);
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
-        }
-        
-        body.dark-theme {
-            /* Дополнительные стили для темной темы если нужны */
         }
     </style>
 </head>
 <body>
-    <div id="status" class="loading">
-        <div>🔄 Загрузка расписания...</div>
-        <div style="font-size: 14px; margin-top: 10px;">Пожалуйста, подождите</div>
-    </div>
-    
-    <!-- Контейнер для нового виджета v4 -->
-    <div id="widget-container" style="display: none;"></div>
+    <!-- Сразу показываем виджет, без загрузчика -->
+    <div data-fit1c-schedule></div>
 
-    <script>
-        const WebApp = window.Telegram.WebApp;
-        WebApp.ready();
-        WebApp.expand();
-        
-        // === ПОДДЕРЖКА ТЕМ TELEGRAM ===
-        // Добавляем класс для темной темы
-        if (WebApp.colorScheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        }
-        
-        // При смене темы перезагружаем страницу
-        WebApp.onEvent('themeChanged', function() {
-            location.reload();
-        });
-        // === КОНЕЦ ПОДДЕРЖКИ ТЕМ ===
-        
-        const statusDiv = document.getElementById('status');
-        const container = document.getElementById('widget-container');
-        
-        // Функция загрузки нового виджета v4
-        function loadWidget() {
-            statusDiv.innerHTML = '<div class="loading">📡 Загрузка расписания...</div>';
-            
-            // Создаем div для виджета (новый атрибут data-fit1c-schedule)
-            const widgetDiv = document.createElement('div');
-            widgetDiv.setAttribute('data-fit1c-schedule', '');
-            container.appendChild(widgetDiv);
-            
-            // Создаем скрипт для нового виджета v4
-            const script = document.createElement('script');
-            script.src = 'https://reservi.ru/widget-fit1c.v4/public/init.js';
-            script.setAttribute('data-fit-apikey', 'b137fb54-9705-4a88-8738-f1422ad91289');
-            script.setAttribute('data-type', 'schedule');
-            
-            // Автоматически подставляем тему Telegram
-            const currentTheme = WebApp.colorScheme === 'dark' ? 'dark' : 'light';
-            script.setAttribute('data-theme', currentTheme);
-            
-            // Настройки виджета (ваши параметры)
-            script.setAttribute('data-settings', JSON.stringify({
-                url_data: {
-                    page: "schedule",
-                    type: "rent",
-                    club_id: "f1c7788a-557e-11f0-910a-00505683cb0f",
-                    show_type: "day",
-                    rent_default_view: "services"
+    <!-- Подключаем новый виджет v4 -->
+    <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
+            data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
+            data-type="schedule" 
+            data-theme='light' 
+            data-settings='{
+                "url_data": {
+                    "page": "schedule",
+                    "type": "rent",
+                    "club_id": "f1c7788a-557e-11f0-910a-00505683cb0f",
+                    "show_type": "day",
+                    "rent_default_view": "services"
                 },
-                router: {
-                    off: true
+                "router": {
+                    "off": true
                 },
-                schedule: {
-                    blocks_show: {
-                        navigation: true
+                "schedule": {
+                    "blocks_show": {
+                        "navigation": true
                     },
-                    filter: {
-                        services_avail: [
+                    "filter": {
+                        "services_avail": [
                             "c405e0d0-d0fd-11f0-997d-00505683cb0f",
                             "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
                         ]
                     }
                 }
-            }));
-            
-            // Добавляем скрипт на страницу
-            document.head.appendChild(script);
-            
-            // Ждем загрузки скрипта
-            script.onload = function() {
-                console.log('Скрипт v4 загружен, ждем инициализацию...');
-                
-                // Проверяем появление контента
-                let attempts = 0;
-                const checkInterval = setInterval(function() {
-                    attempts++;
-                    
-                    // Проверяем, появился ли контент в виджете
-                    if (widgetDiv.children.length > 0) {
-                        clearInterval(checkInterval);
-                        console.log('Виджет v4 успешно загружен!');
-                        statusDiv.style.display = 'none';
-                        container.style.display = 'block';
-                    }
-                    
-                    // Таймаут 10 секунд
-                    if (attempts > 20) {
-                        clearInterval(checkInterval);
-                        if (widgetDiv.children.length === 0) {
-                            showError('Виджет не инициализировался');
-                        }
-                    }
-                }, 500);
-            };
-            
-            script.onerror = function() {
-                showError('Не удалось загрузить скрипт виджета');
-            };
-        }
+            }'></script>
+
+    <script>
+        // Простая инициализация Telegram
+        const WebApp = window.Telegram.WebApp;
+        WebApp.ready();
+        WebApp.expand();
         
-        function showError(message) {
-            statusDiv.innerHTML = `
-                <div class="error">
-                    ❌ ${message || 'Не удалось загрузить расписание'}<br><br>
-                    <small>Проверьте интернет и попробуйте снова</small><br><br>
-                    <button class="retry-btn" onclick="location.reload()">
-                        🔄 Обновить
-                    </button>
-                </div>
-            `;
-            
-            WebApp.MainButton.setText('Закрыть').onClick(() => WebApp.close()).show();
-        }
+        // Поддержка тем (просто перезагрузка при смене)
+        WebApp.onEvent('themeChanged', function() {
+            location.reload();
+        });
         
-        // Запускаем загрузку
-        loadWidget();
+        // Если пользователь нажимает "Назад"
+        WebApp.onEvent('backButtonClicked', function() {
+            WebApp.close();
+        });
         
+        console.log('Мини-приложение запущено');
     </script>
 </body>
 </html>
