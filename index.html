@@ -8,16 +8,21 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
-        /* УБИРАЕМ ВСЕ СЛОЖНЫЕ СТИЛИ */
         body {
             margin: 0;
             padding: 0;
-            background: white;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+        }
+        
+        /* Виджет на всю ширину */
+        [data-fit1c-schedule] {
+            width: 100%;
+            min-height: 100vh;
         }
     </style>
 </head>
 <body>
-    <!-- Только виджет, ничего лишнего -->
+    <!-- Контейнер для виджета -->
     <div data-fit1c-schedule></div>
 
     <!-- Виджет v4 -->
@@ -32,17 +37,33 @@
                     "club_id": "f1c7788a-557e-11f0-910a-00505683cb0f",
                     "show_type": "day",
                     "rent_default_view": "services"
+                },
+                "router": {
+                    "off": true
+                },
+                "schedule": {
+                    "blocks_show": {
+                        "navigation": true
+                    },
+                    "filter": {
+                        "services_avail": [
+                            "c405e0d0-d0fd-11f0-997d-00505683cb0f",
+                            "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
+                        ]
+                    }
                 }
             }'></script>
 
     <script>
-        // МИНИМУМ КОДА ДЛЯ TELEGRAM
-        const WebApp = window.Telegram.WebApp;
-        WebApp.ready();
-        WebApp.expand();
-        
-        // Просто расширяем через секунду после загрузки
-        setTimeout(() => WebApp.expand(), 1000);
+        // Простейшая инициализация Telegram
+        if (window.Telegram?.WebApp) {
+            const WebApp = window.Telegram.WebApp;
+            WebApp.ready();
+            WebApp.expand();
+            
+            // Расширяем еще раз после загрузки
+            setTimeout(() => WebApp.expand(), 1000);
+        }
     </script>
 </body>
 </html>
