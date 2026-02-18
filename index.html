@@ -1,65 +1,148 @@
-<!-- Самый простой вариант для Telegram -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body style="margin:0; padding:0; background:white;">
-    <!-- Просто вставляем виджет без всяких оберток -->
-    <div data-fit1c-schedule></div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- Подключаем Telegram SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        /* МИНИМАЛЬНЫЕ СТИЛИ - только самое необходимое */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff; /* Временный фон */
+        }
+        
+        /* Убираем все трансформации, которые могут вызвать размытие */
+        [data-fit1c-schedule] {
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            opacity: 1;
+            transform: none;
+            backface-visibility: visible;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Если виджет создает iframe */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            opacity: 1;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Контейнер для виджета -->
+    <div data-fit1c-schedule></div>
+
+    <!-- Подключаем виджет -->
     <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
             data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
             data-type="schedule" 
             data-theme='light' 
-            data-settings='{...}'></script>
-    
+            data-settings='{
+                "url_data": {
+                    "page": "schedule",
+                    "type": "rent",
+                    "club_id": "f1c7788a-557e-11f0-910a-00505683cb0f",
+                    "show_type": "day",
+                    "rent_default_view": "services"
+                },
+                "router": {
+                    "off": true
+                },
+                "schedule": {
+                    "blocks_show": {
+                        "navigation": true
+                    },
+                    "filter": {
+                        "services_avail": [
+                            "c405e0d0-d0fd-11f0-997d-00505683cb0f",
+                            "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
+                        ]
+                    }
+                }
+            }'></script>
+
     <script>
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+        (function() {
+            const WebApp = window.Telegram.WebApp;
+            
+            // 1. Базовая инициализация
+            WebApp.ready();
+            WebApp.expand();
+            
+            // 2. Отключаем все возможные трансформации от Telegram
+            document.body.style.transform = 'none';
+            document.body.style.webkitTransform = 'none';
+            
+            // 3. Функция принудительной перерисовки
+            function forceRedraw() {
+                // Сообщаем Telegram изменить размер
+                WebApp.expand();
+                
+                // Принудительно перерисовываем виджет
+                const widget = document.querySelector('[data-fit1c-schedule]');
+                if (widget) {
+                    // Скрываем и показываем для перерисовки
+                    widget.style.opacity = '0.99';
+                    setTimeout(() => {
+                        widget.style.opacity = '1';
+                    }, 10);
+                    
+                    // Ищем iframe внутри виджета
+                    const iframe = widget.querySelector('iframe');
+                    if (iframe) {
+                        // Если есть iframe, пробуем сбросить его размеры
+                        iframe.style.height = '100%';
+                        iframe.style.width = '100%';
+                    }
+                }
+            }
+            
+            // 4. Запускаем перерисовку несколько раз
+            forceRedraw();
+            setTimeout(forceRedraw, 300);
+            setTimeout(forceRedraw, 800);
+            setTimeout(forceRedraw, 1500);
+            setTimeout(forceRedraw, 3000);
+            
+            // 5. Следим за изменениями
+            const observer = new MutationObserver(function() {
+                forceRedraw();
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+            
+            // 6. Обработка тем
+            WebApp.onEvent('themeChanged', function() {
+                setTimeout(forceRedraw, 100);
+            });
+            
+            // 7. Кнопка назад
+            WebApp.onEvent('backButtonClicked', function() {
+                WebApp.close();
+            });
+            
+            console.log('Мини-приложение запущено с принудительной перерисовкой');
+        })();
     </script>
-    <script>
-  function resizeTelegramApp() {
-    if (window.Telegram && window.Telegram.WebApp) {
-      // Пытаемся найти iframe внутри виджета
-      const iframe = document.querySelector('[data-fit1c-schedule] iframe, [data-fit1c-calendar] iframe');
-      
-      if (iframe) {
-        // Если iframe загружен, пробуем получить его высоту и передать Telegram
-        try {
-          // Простой способ: попросить Telegram подстроиться под контент
-          window.Telegram.WebApp.expand();
-          
-          // Более точный способ: если у iframe есть контент, можно попробовать измерить
-          setTimeout(() => {
-            window.Telegram.WebApp.expand();
-          }, 500);
-        } catch (e) {
-          console.log('Ошибка ресайза:', e);
-        }
-      } else {
-        // Если iframe еще не появился, просто расширяем на всякий случай
-        window.Telegram.WebApp.expand();
-      }
-    }
-  }
-
-  // Запускаем проверку несколько раз после загрузки страницы
-  window.addEventListener('load', function() {
-    setTimeout(resizeTelegramApp, 300);  // Через 0.3 сек
-    setTimeout(resizeTelegramApp, 1000); // Через 1 сек
-    setTimeout(resizeTelegramApp, 3000); // Через 3 сек
-  });
-
-  // Наблюдаем за изменениями в DOM, чтобы поймать момент появления iframe
-  const observer = new MutationObserver(function(mutations) {
-    resizeTelegramApp();
-  });
-  
-  // Начинаем наблюдение за изменениями в теле документа
-  observer.observe(document.body, { childList: true, subtree: true });
-</script>
 </body>
 </html>
