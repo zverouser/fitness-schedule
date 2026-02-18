@@ -3,53 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Расписание занятий</title>
+    <title>Расписание клуба</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f5f5;
+            box-sizing: border-box;
         }
-        #content {
+        
+        body, html {
+            background-color: #FFFFFF;
+            height: 100%;
             width: 100%;
+        }
+        
+        #content {
+            background-color: #FFFFFF;
             min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .loader {
+            background-color: #FFFFFF;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Контейнер для виджета */
+        .widget-container {
+            background-color: #FFFFFF;
+            width: 100%;
+            flex: 1;
         }
     </style>
 </head>
-<body>
-    <div id="content">
-        <!-- Ваш скрипт для виджета -->
-        <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
-                data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
-                data-type="schedule" 
-                data-theme='light' 
-                data-settings='{
-                    "url_data": {
-                        "page": "schedule",
-                        "type": "rent",
-                        "club_id": "f1c7788a-557e-11f0-910a-00505683cb0f",
-                        "show_type": "day",
-                        "rent_default_view":"services"
-                    },
-                    "router": {
-                        "off": true
-                    },
-                    "schedule": {
-                        "blocks_show": {
-                            "navigation": true
-                        },
-                        "filter": {
-                            "services_avail": [
-                                "c405e0d0-d0fd-11f0-997d-00505683cb0f",
-                                "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
-                            ]
+<body style="background-color: #FFFFFF; margin: 0; padding: 0;">
+    <div id="content" style="background-color: #FFFFFF;">
+        <!-- Индикатор загрузки -->
+        <div class="loader" id="loader">Загрузка расписания...</div>
+        
+        <!-- Контейнер для виджета -->
+        <div class="widget-container" style="background-color: #FFFFFF;">
+            <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
+                    data-fit-apikey="42e1e4d1-499e-4154-a343-c50637c858c5" 
+                    data-type="schedule" 
+                    data-theme='light' 
+                    data-settings='{
+                        "url_data": {
+                            "club_id": "76f052aa-70d0-11ef-9cd6-00505683c1a3"
                         }
-                    }
-                }'></script>
+                    }'>
+            </script>
+        </div>
     </div>
     
-    <!-- Добавим поддержку Telegram Web App -->
+    <!-- Telegram Web App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Инициализация Telegram Web App
@@ -58,8 +70,39 @@
         // Сообщаем Telegram, что приложение готово
         tg.ready();
         
-        // Расширяем приложение на всю доступную высоту
+        // Расширяем на всю высоту
         tg.expand();
+        
+        // Устанавливаем белый фон
+        document.body.style.backgroundColor = '#FFFFFF';
+        document.getElementById('content').style.backgroundColor = '#FFFFFF';
+        
+        // Скрываем загрузчик после загрузки страницы
+        window.addEventListener('load', function() {
+            // Даем небольшую задержку для загрузки виджета
+            setTimeout(function() {
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+            }, 800);
+        });
+        
+        // Отключаем основную кнопку Telegram
+        tg.MainButton.hide();
+        
+        // Обработка ошибок
+        window.addEventListener('error', function(e) {
+            console.error('Ошибка загрузки:', e.message);
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.innerHTML = 'Ошибка загрузки расписания. Пожалуйста, попробуйте позже.';
+                loader.style.color = 'red';
+            }
+        });
+        
+        console.log('Telegram Mini App: расписание клуба');
+        console.log('Club ID: 76f052aa-70d0-11ef-9cd6-00505683c1a3');
     </script>
 </body>
 </html>
