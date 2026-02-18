@@ -2,13 +2,10 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- Подключаем Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Ваш код от 1С с расписанием -->
-    <script src="https://reservi.ru/widget-fit1c.v2/js/config.js" data-fit-salon-id="faaa38c4-30d3-4d6d-ac61-08acc927e27a"></script>
     
     <style>
         body {
@@ -48,10 +45,22 @@
             cursor: pointer;
         }
         
-        /* Стили для виджета */
-        [data-fit1c-calendar] {
+        /* Стили для контейнера виджета */
+        #widget-container {
             width: 100%;
-            min-height: 600px;
+            min-height: 100vh;
+        }
+        
+        /* Адаптация виджета под Telegram */
+        [data-fit1c-schedule] {
+            --primary-color: var(--tg-theme-button-color, #40a7e3);
+            --text-color: var(--tg-theme-text-color, #000000);
+            --bg-color: var(--tg-theme-bg-color, #ffffff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+        
+        body.dark-theme {
+            /* Дополнительные стили для темной темы если нужны */
         }
     </style>
 </head>
@@ -61,7 +70,7 @@
         <div style="font-size: 14px; margin-top: 10px;">Пожалуйста, подождите</div>
     </div>
     
-    <!-- Контейнер для виджета -->
+    <!-- Контейнер для нового виджета v4 -->
     <div id="widget-container" style="display: none;"></div>
 
     <script>
@@ -69,13 +78,13 @@
         WebApp.ready();
         WebApp.expand();
         
-        // === ПРОСТАЯ ПОДДЕРЖКА ТЕМ ===
-        // Если тема темная - добавляем класс
+        // === ПОДДЕРЖКА ТЕМ TELEGRAM ===
+        // Добавляем класс для темной темы
         if (WebApp.colorScheme === 'dark') {
             document.body.classList.add('dark-theme');
         }
         
-        // При смене темы просто перезагружаем страницу
+        // При смене темы перезагружаем страницу
         WebApp.onEvent('themeChanged', function() {
             location.reload();
         });
@@ -84,59 +93,82 @@
         const statusDiv = document.getElementById('status');
         const container = document.getElementById('widget-container');
         
-        // Упрощенная функция загрузки (рабочая версия)
+        // Функция загрузки нового виджета v4
         function loadWidget() {
             statusDiv.innerHTML = '<div class="loading">📡 Загрузка расписания...</div>';
             
-            // Создаем скрипт
-            const script = document.createElement('script');
-            script.src = 'https://reservi.ru/widget-fit1c.v2/js/config.js';
-            script.setAttribute('data-fit-salon-id', 'faaa38c4-30d3-4d6d-ac61-08acc927e27a');
-            
-            // Создаем div для виджета
+            // Создаем div для виджета (новый атрибут data-fit1c-schedule)
             const widgetDiv = document.createElement('div');
-            widgetDiv.setAttribute('data-fit1c-calendar', '');
-            widgetDiv.innerHTML = 'Расписание загружается...';
-            
-            // Добавляем на страницу
+            widgetDiv.setAttribute('data-fit1c-schedule', '');
             container.appendChild(widgetDiv);
+            
+            // Создаем скрипт для нового виджета v4
+            const script = document.createElement('script');
+            script.src = 'https://reservi.ru/widget-fit1c.v4/public/init.js';
+            script.setAttribute('data-fit-apikey', 'b137fb54-9705-4a88-8738-f1422ad91289');
+            script.setAttribute('data-type', 'schedule');
+            
+            // Автоматически подставляем тему Telegram
+            const currentTheme = WebApp.colorScheme === 'dark' ? 'dark' : 'light';
+            script.setAttribute('data-theme', currentTheme);
+            
+            // Настройки виджета (ваши параметры)
+            script.setAttribute('data-settings', JSON.stringify({
+                url_data: {
+                    page: "schedule",
+                    type: "rent",
+                    club_id: "f1c7788a-557e-11f0-910a-00505683cb0f",
+                    show_type: "day",
+                    rent_default_view: "services"
+                },
+                router: {
+                    off: true
+                },
+                schedule: {
+                    blocks_show: {
+                        navigation: true
+                    },
+                    filter: {
+                        services_avail: [
+                            "c405e0d0-d0fd-11f0-997d-00505683cb0f",
+                            "7d931ae0-d0fe-11f0-9b19-00505683cb0f"
+                        ]
+                    }
+                }
+            }));
+            
+            // Добавляем скрипт на страницу
             document.head.appendChild(script);
             
             // Ждем загрузки скрипта
             script.onload = function() {
-                console.log('Скрипт загружен, ждем виджет...');
+                console.log('Скрипт v4 загружен, ждем инициализацию...');
                 
-                // Проверяем появление виджета каждую секунду
+                // Проверяем появление контента
                 let attempts = 0;
                 const checkInterval = setInterval(function() {
                     attempts++;
                     
-                    // Проверяем, изменилось ли содержимое виджета
-                    const currentContent = widgetDiv.innerHTML;
-                    
-                    if (currentContent !== 'Расписание загружается...' && currentContent.length > 0) {
+                    // Проверяем, появился ли контент в виджете
+                    if (widgetDiv.children.length > 0) {
                         clearInterval(checkInterval);
-                        console.log('Виджет загружен!');
+                        console.log('Виджет v4 успешно загружен!');
                         statusDiv.style.display = 'none';
                         container.style.display = 'block';
                     }
                     
-                    if (attempts > 10) {
+                    // Таймаут 10 секунд
+                    if (attempts > 20) {
                         clearInterval(checkInterval);
-                        
-                        const calendarElements = document.querySelectorAll('[data-fit1c-calendar]');
-                        if (calendarElements.length > 0 && calendarElements[0].children.length > 0) {
-                            statusDiv.style.display = 'none';
-                            container.style.display = 'block';
-                        } else {
-                            showError();
+                        if (widgetDiv.children.length === 0) {
+                            showError('Виджет не инициализировался');
                         }
                     }
-                }, 1000);
+                }, 500);
             };
             
             script.onerror = function() {
-                showError('Не удалось загрузить скрипт расписания');
+                showError('Не удалось загрузить скрипт виджета');
             };
         }
         
