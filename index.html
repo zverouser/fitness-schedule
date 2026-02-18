@@ -10,22 +10,30 @@
     <style>
         body {
             margin: 0;
-            padding: 16px;
+            padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
         }
-        .status {
+        
+        #status {
             text-align: center;
-            padding: 20px;
-            margin-top: 50px;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
+        
         .loading {
             color: var(--tg-theme-hint-color, #999999);
         }
+        
         .error {
             color: var(--tg-theme-destructive-text-color, #ff3b30);
         }
+        
         .retry-btn {
             background-color: var(--tg-theme-button-color, #40a7e3);
             color: var(--tg-theme-button-text-color, #ffffff);
@@ -36,14 +44,21 @@
             margin-top: 20px;
             cursor: pointer;
         }
+        
+        /* Стили для виджета */
+        [data-fit1c-calendar] {
+            width: 100%;
+            min-height: 600px;
+        }
     </style>
 </head>
 <body>
-    <div id="status" class="status loading">
+    <div id="status" class="loading">
         <div>🔄 Загрузка расписания...</div>
+        <div style="font-size: 14px; margin-top: 10px;">Пожалуйста, подождите</div>
     </div>
     
-    <!-- Место для виджета (изначально скрыто) -->
+    <!-- Контейнер для виджета -->
     <div id="widget-container" style="display: none;"></div>
 
     <script>
@@ -54,98 +69,82 @@
         const statusDiv = document.getElementById('status');
         const container = document.getElementById('widget-container');
         
-        // Функция для загрузки скрипта
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                script.setAttribute('data-fit-salon-id', 'faaa38c4-30d3-4d6d-ac61-08acc927e27a');
-                document.head.appendChild(script);
-            });
-        }
-        
-        // Функция для создания виджета
-        function createWidget() {
-            return new Promise((resolve) => {
-                // Создаем div с атрибутом для виджета
-                const widgetDiv = document.createElement('div');
-                widgetDiv.setAttribute('data-fit1c-calendar', '');
-                widgetDiv.innerHTML = 'Расписание работает на <a href="https://www.fitness1c.ru">1С:Фитнес клуб</a>';
+        // Упрощенная функция загрузки
+        function loadWidget() {
+            statusDiv.innerHTML = '<div class="loading">📡 Загрузка расписания...</div>';
+            
+            // Создаем скрипт
+            const script = document.createElement('script');
+            script.src = 'https://reservi.ru/widget-fit1c.v2/js/config.js';
+            script.setAttribute('data-fit-salon-id', 'faaa38c4-30d3-4d6d-ac61-08acc927e27a');
+            
+            // Создаем div для виджета
+            const widgetDiv = document.createElement('div');
+            widgetDiv.setAttribute('data-fit1c-calendar', '');
+            widgetDiv.innerHTML = 'Расписание загружается...';
+            
+            // Добавляем на страницу
+            container.appendChild(widgetDiv);
+            document.head.appendChild(script);
+            
+            // Ждем загрузки скрипта
+            script.onload = function() {
+                console.log('Скрипт загружен, ждем виджет...');
                 
-                // Очищаем контейнер и добавляем виджет
-                container.innerHTML = '';
-                container.appendChild(widgetDiv);
-                
-                // Ждем немного, чтобы виджет инициализировался
-                setTimeout(() => {
-                    // Проверяем, появился ли контент
-                    if (widgetDiv.children.length > 1) {
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
-                }, 3000);
-            });
-        }
-        
-        // Основная функция загрузки
-        async function initWidget() {
-            try {
-                statusDiv.innerHTML = '<div class="loading">📡 Загрузка скрипта расписания...</div>';
-                
-                // Загружаем скрипт виджета
-                await loadScript('https://reservi.ru/widget-fit1c.v2/js/config.js');
-                
-                statusDiv.innerHTML = '<div class="loading">📅 Создание расписания...</div>';
-                
-                // Создаем виджет
-                const widgetCreated = await createWidget();
-                
-                if (widgetCreated) {
-                    statusDiv.style.display = 'none';
-                    container.style.display = 'block';
-                    console.log('Расписание загружено успешно');
+                // Проверяем появление виджета каждую секунду
+                let attempts = 0;
+                const checkInterval = setInterval(function() {
+                    attempts++;
                     
-                    // Показываем приветствие в консоли Telegram
-                    if (WebApp.initDataUnsafe?.user?.first_name) {
-                        console.log(`Привет, ${WebApp.initDataUnsafe.user.first_name}!`);
+                    // Проверяем, изменилось ли содержимое виджета
+                    // (виджет сам заменяет содержимое)
+                    const currentContent = widgetDiv.innerHTML;
+                    
+                    // Если содержимое не "Расписание загружается..." и не пустое
+                    if (currentContent !== 'Расписание загружается...' && currentContent.length > 0) {
+                        clearInterval(checkInterval);
+                        console.log('Виджет загружен!');
+                        statusDiv.style.display = 'none';
+                        container.style.display = 'block';
                     }
-                } else {
-                    throw new Error('Виджет не создался');
-                }
-                
-            } catch (error) {
-                console.error('Ошибка:', error);
-                
-                statusDiv.innerHTML = `
-                    <div class="error">
-                        ❌ Не удалось загрузить расписание<br><br>
-                        <small>Попробуйте:</small><br>
-                        • Обновить страницу<br>
-                        • Проверить интернет<br>
-                        • Открыть в другом браузере<br><br>
-                        <button class="retry-btn" onclick="location.reload()">
-                            🔄 Попробовать снова
-                        </button>
-                    </div>
-                `;
-                
-                // Показываем кнопку закрытия в Telegram
-                WebApp.MainButton.setText('Закрыть').onClick(() => WebApp.close()).show();
-            }
+                    
+                    // Если прошло 10 секунд - считаем что виджет не загрузился
+                    if (attempts > 10) {
+                        clearInterval(checkInterval);
+                        
+                        // Проверяем, может быть виджет уже есть в DOM
+                        const calendarElements = document.querySelectorAll('[data-fit1c-calendar]');
+                        if (calendarElements.length > 0 && calendarElements[0].children.length > 0) {
+                            statusDiv.style.display = 'none';
+                            container.style.display = 'block';
+                        } else {
+                            showError();
+                        }
+                    }
+                }, 1000);
+            };
+            
+            script.onerror = function() {
+                showError('Не удалось загрузить скрипт расписания');
+            };
+        }
+        
+        function showError(message) {
+            statusDiv.innerHTML = `
+                <div class="error">
+                    ❌ ${message || 'Не удалось загрузить расписание'}<br><br>
+                    <small>Проверьте интернет и попробуйте снова</small><br><br>
+                    <button class="retry-btn" onclick="location.reload()">
+                        🔄 Обновить
+                    </button>
+                </div>
+            `;
+            
+            WebApp.MainButton.setText('Закрыть').onClick(() => WebApp.close()).show();
         }
         
         // Запускаем загрузку
-        initWidget();
-        
-        // Обработка ошибок скриптов
-        window.addEventListener('error', function(e) {
-            if (e.target.src && e.target.src.includes('reservi.ru')) {
-                console.log('Ошибка загрузки скрипта виджета');
-            }
-        });
+        loadWidget();
         
     </script>
 </body>
