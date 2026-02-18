@@ -14,20 +14,38 @@
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
-        /* Просто показываем виджет на весь экран */
+        /* Контейнер на всю высоту */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Виджет на всю высоту */
         [data-fit1c-schedule] {
             width: 100%;
+            height: 100%;
             min-height: 100vh;
+            display: block;
+        }
+        
+        /* Если виджет создает iframe, растягиваем и его */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <!-- Сразу показываем виджет, без загрузчика -->
     <div data-fit1c-schedule></div>
 
-    <!-- Подключаем новый виджет v4 -->
     <script src="https://reservi.ru/widget-fit1c.v4/public/init.js" 
             data-fit-apikey="b137fb54-9705-4a88-8738-f1422ad91289" 
             data-type="schedule" 
@@ -57,20 +75,53 @@
             }'></script>
 
     <script>
-        // Простая инициализация Telegram
         const WebApp = window.Telegram.WebApp;
+        
+        // Сообщаем Telegram что приложение готово
         WebApp.ready();
+        
+        // Растягиваем на весь экран
         WebApp.expand();
         
-        // Поддержка тем (просто перезагрузка при смене)
+        // Важно! Сообщаем Telegram что контент может менять высоту
+        WebApp.setHeaderColor('bg_color');
+        
+        // Поддержка тем
         WebApp.onEvent('themeChanged', function() {
             location.reload();
         });
         
-        // Если пользователь нажимает "Назад"
+        // Кнопка назад
         WebApp.onEvent('backButtonClicked', function() {
             WebApp.close();
         });
+        
+        // Функция для принудительного обновления высоты
+        function resizeViewport() {
+            WebApp.expand();
+        }
+        
+        // Пробуем обновить высоту после загрузки
+        setTimeout(resizeViewport, 500);
+        setTimeout(resizeViewport, 1000);
+        setTimeout(resizeViewport, 2000);
+        
+        // Если виджет создает iframe, следим за его загрузкой
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.tagName === 'IFRAME') {
+                            node.onload = function() {
+                                resizeViewport();
+                            };
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
         
         console.log('Мини-приложение запущено');
     </script>
